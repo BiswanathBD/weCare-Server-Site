@@ -32,10 +32,14 @@ async function run() {
     const eventCollection = eventDB.collection("eventCollection");
 
     // create event
-    app.post("/allEvent", async (req, res) => {});
+    app.post("/event", async (req, res) => {
+      const newEvent = req.body;
+      const result = eventCollection.insertOne(newEvent);
+      res.send(result);
+    });
 
     // get all upcoming event
-    app.get("/upcomingEvent", async (req, res) => {
+    app.get("/event", async (req, res) => {
       const cursor = eventCollection.find();
       const result = await cursor.toArray();
       res.send(result);
