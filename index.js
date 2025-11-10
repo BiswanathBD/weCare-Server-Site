@@ -55,7 +55,7 @@ async function run() {
 
     const eventDB = client.db("eventDB");
     const eventCollection = eventDB.collection("eventCollection");
-    const joinedEventCollection = eventDB.collection("joinedEventCollection");
+    const joinedUserCollection = eventDB.collection("joinedUserCollection");
 
     // create event
     app.post("/event", verifyFireBaseToken, async (req, res) => {
@@ -66,15 +66,31 @@ async function run() {
 
     // get all upcoming event
     app.get("/event", async (req, res) => {
+      const nowDate = new Date();
+
       const cursor = eventCollection.find();
-      const result = await cursor.toArray();
-      res.send(result);
+      const events = await cursor.toArray();
+      const upcomingEvents = events
+        .filter((event) => {
+          const eventDate = new Date(event.eventDate);
+          return eventDate > nowDate;
+        })
+        .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+
+      res.send(upcomingEvents);
     });
 
     // get specific event
     app.get("/event/:id", async (req, res) => {
       const { id } = req.params;
       const result = await eventCollection.findOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
+    // create join event data
+    app.post("/joinEvent", verifyFireBaseToken, async (req, res) => {
+      const newJoinData = req.body;
+      const result = await joinedUserCollection.insertOne(newJoinData);
       res.send(result);
     });
   } finally {
