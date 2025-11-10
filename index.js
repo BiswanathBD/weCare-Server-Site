@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -55,6 +55,7 @@ async function run() {
 
     const eventDB = client.db("eventDB");
     const eventCollection = eventDB.collection("eventCollection");
+    const joinedEventCollection = eventDB.collection("joinedEventCollection");
 
     // create event
     app.post("/event", verifyFireBaseToken, async (req, res) => {
@@ -67,6 +68,13 @@ async function run() {
     app.get("/event", async (req, res) => {
       const cursor = eventCollection.find();
       const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // get specific event
+    app.get("/event/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await eventCollection.findOne({ _id: new ObjectId(id) });
       res.send(result);
     });
   } finally {
