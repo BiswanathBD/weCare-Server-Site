@@ -9,6 +9,31 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// firebase token verification
+const admin = require("firebase-admin");
+const serviceAccount = require("./wecare-service-key.json");
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+// token verification middleware for  firebase
+const verifyFireBaseToken = async (req, res, next) => {
+  if (!req.headers.authorization) {
+    return res.status(401).send({ message: "Unauthorize Access" });
+  }
+  const token = req.headers.authorization.split(" ")[1];
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorize Access" });
+  }
+
+  try {
+    const authInfo = await admin.auth().verifyIdToken(token);
+    req.token_email = authInfo.email;
+    next();
+  } catch {
+    return res.status(401).send({ message: "Unauthorize Access" });
+  }
+};
+
 // mongodb connection
 const uri = process.env.MONGODB_URI;
 
@@ -32,7 +57,7 @@ async function run() {
     const eventCollection = eventDB.collection("eventCollection");
 
     // create event
-    app.post("/event", async (req, res) => {
+    app.post("/event", verifyFireBaseToken, async (req, res) => {
       const newEvent = req.body;
       const result = eventCollection.insertOne(newEvent);
       res.send(result);
@@ -50,5 +75,5 @@ async function run() {
 run().catch(console.dir);
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`weCare app listening on port ${port}`);
 });
