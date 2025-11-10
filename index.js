@@ -93,6 +93,35 @@ async function run() {
       const result = await joinedUserCollection.insertOne(newJoinData);
       res.send(result);
     });
+
+    // get user joined data by email
+    app.get(
+      "/joinedEvent/user/:userEmail",
+      // verifyFireBaseToken,
+      async (req, res) => {
+        const { userEmail } = req.params;
+        const result = await joinedUserCollection
+          .find({ userEmail: userEmail })
+          .toArray();
+        res.send(result);
+      }
+    );
+
+    // get joined data by email + productId
+    app.get(
+      "/joinedEvent/:userEmail/:productId",
+      // verifyFireBaseToken,
+      async (req, res) => {
+        const { userEmail, productId } = req.params;
+
+        const result = await joinedUserCollection.findOne({
+          email: userEmail,
+          productId: productId,
+        });
+
+        res.send(result);
+      }
+    );
   } finally {
   }
 }
