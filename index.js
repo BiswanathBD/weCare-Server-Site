@@ -60,12 +60,12 @@ async function run() {
     // create event
     app.post("/event", verifyFireBaseToken, async (req, res) => {
       const newEvent = req.body;
-      const result = eventCollection.insertOne(newEvent);
+      const result = await eventCollection.insertOne(newEvent);
       res.send(result);
     });
 
     // get all upcoming event
-    app.get("/event", async (req, res) => {
+    app.get("/events", async (req, res) => {
       const nowDate = new Date();
 
       const cursor = eventCollection.find();
@@ -78,6 +78,46 @@ async function run() {
         .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
 
       res.send(upcomingEvents);
+    });
+
+    // get searched event by title
+    app.get("/events/:search", async (req, res) => {
+      const { search } = req.params;
+      const nowDate = new Date();
+
+      const normalizedSearch = search.replace(/\s+/g, "\\s*");
+      const query = { title: { $regex: normalizedSearch, $options: "i" } };
+
+      if (search === "") {
+        const cursor = eventCollection.find();
+        const events = await cursor.toArray();
+        const upcomingEvents = events
+          .filter((event) => {
+            const eventDate = new Date(event.eventDate);
+            return eventDate > nowDate;
+          })
+          .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+
+        res.send(upcomingEvents);
+      } else {
+        const cursor = eventCollection.find(query);
+        const events = await cursor.toArray();
+        const upcomingEvents = events
+          .filter((event) => {
+            const eventDate = new Date(event.eventDate);
+            return eventDate > nowDate;
+          })
+          .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
+
+        res.send(upcomingEvents);
+      }
+    });
+
+    // get events by category
+    app.get("/events/category/:category", async (req, res) => {
+      const { category } = req.params;
+      const result = await eventCollection.find({ category }).toArray();
+      res.send(result);
     });
 
     // get specific event
@@ -97,27 +137,40 @@ async function run() {
     // get user joined data by email
     app.get(
       "/joinedEvent/user/:userEmail",
-      // verifyFireBaseToken,
+      verifyFireBaseToken,
       async (req, res) => {
         const { userEmail } = req.params;
         const result = await joinedUserCollection
           .find({ userEmail: userEmail })
+          .sort({ eventDate: 1 })
           .toArray();
         res.send(result);
       }
     );
 
-    // get joined data by email + productId
-    app.get(
-      "/joinedEvent/:userEmail/:productId",
-      // verifyFireBaseToken,
-      async (req, res) => {
-        const { userEmail, productId } = req.params;
+    // delete joined events data from user
+    app.delete("/joinedEvent/:id", verifyFireBaseToken, async (req, res) => {
+      const { id } = req.params;
+      const result = await joinedUserCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
 
-        const result = await joinedUserCollection.findOne({
-          email: userEmail,
-          productId: productId,
-        });
+    // get isJoined data by eventId + userEmail
+    app.get(
+      "/isJoined/:userEmail/:eventId",
+      verifyFireBaseToken,
+      async (req, res) => {
+        const { userEmail, eventId } = req.params;
+
+        const joinedUser = await joinedUserCollection
+          .find({ eventId })
+          .toArray();
+
+        const result = joinedUser.filter(
+          (user) => user.userEmail === userEmail
+        );
 
         res.send(result);
       }
