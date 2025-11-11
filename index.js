@@ -146,6 +146,15 @@ async function run() {
       res.send(result);
     });
 
+    // modify event by id
+    app.put("/updateEvent/:eventId", verifyFireBaseToken, async (req, res) => {
+      const { eventId } = req.params;
+      const query = { _id: new ObjectId(eventId) };
+      const updatedEvent = { $set: { ...req.body } };
+      const result = await eventCollection.updateOne(query, updatedEvent);
+      res.send(result);
+    });
+
     // create join event data
     app.post("/joinEvent", verifyFireBaseToken, async (req, res) => {
       const newJoinData = req.body;
