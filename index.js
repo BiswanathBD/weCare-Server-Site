@@ -120,10 +120,29 @@ async function run() {
       res.send(result);
     });
 
+    // get events by user email
+    app.get("/events/user/:email", async (req, res) => {
+      const { email } = req.params;
+      const result = await eventCollection
+        .find({ creatorEmail: email })
+        .toArray();
+      res.send(result);
+    });
+
     // get specific event
     app.get("/event/:id", async (req, res) => {
       const { id } = req.params;
       const result = await eventCollection.findOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
+    // delete event by id
+    app.delete("/events/:eventId", verifyFireBaseToken, async (req, res) => {
+      const { eventId } = req.params;
+
+      const result = await eventCollection.deleteOne({
+        _id: new ObjectId(eventId),
+      });
       res.send(result);
     });
 
