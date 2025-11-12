@@ -1,3 +1,4 @@
 node_modules
 .env
 wecare-service-key.json
+.vercel

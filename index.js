@@ -11,7 +11,13 @@ app.use(express.json());
 
 // firebase token verification
 const admin = require("firebase-admin");
-const serviceAccount = require("./wecare-service-key.json");
+
+const decoded = Buffer.from(
+  process.env.FIREBASE_SERVICE_TOKEN,
+  "base64"
+).toString("utf8");
+const serviceAccount = JSON.parse(decoded);
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -51,7 +57,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const eventDB = client.db("eventDB");
     const eventCollection = eventDB.collection("eventCollection");
