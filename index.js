@@ -64,6 +64,13 @@ async function run() {
       res.send(result);
     });
 
+    // get event for gallery
+    app.get("/featuresEvents", async (req, res) => {
+      const cursor = eventCollection.find().limit(6);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
     // get all upcoming event
     app.get("/events", async (req, res) => {
       const nowDate = new Date();
