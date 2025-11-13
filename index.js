@@ -156,6 +156,10 @@ async function run() {
       const result = await eventCollection.deleteOne({
         _id: new ObjectId(eventId),
       });
+      if (result.deletedCount === 1) {
+        const deleteJoin = await joinedUserCollection.deleteMany({ eventId });
+        console.log(deleteJoin);
+      }
       res.send(result);
     });
 
@@ -168,7 +172,7 @@ async function run() {
       res.send(result);
     });
 
-    // create join event data
+    // create join event
     app.post("/joinEvent", verifyFireBaseToken, async (req, res) => {
       const newJoinData = req.body;
       const result = await joinedUserCollection.insertOne(newJoinData);
